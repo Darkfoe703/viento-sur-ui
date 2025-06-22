@@ -1,26 +1,17 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <DashboardView />
 </template>
 
-<script>
-import HelloWorld from './components/HelloWorld.vue'
+<script setup>
+import DashboardView from './components/DashboardView.vue';
 
-export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
+// import DashboardView from './components/DashboardView.vue';
+// import TestView from './components/TestView.vue';
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+/* Estilos globales que puedan ser necesarios */
+body {
+  margin: 0; /* Resetear márgenes del body para ocupar toda la altura */
 }
 </style>

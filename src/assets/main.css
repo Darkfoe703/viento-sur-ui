@@ -1,0 +1,54 @@
+@media (prefers-color-scheme: dark) {
+    :root {
+            /* Colores principales */
+            --primary-color: #017FC0;
+            /* Pico: Azure: pico-color-azure-500 */
+            --secondary-color: #007A50;
+            /* Pico: Jade: pico-color-jade-550 */
+            --accent-color: #018CD4;
+            /* Pico: Azure: pico-color-azure-450*/
+            --line-color: #202632;
+    
+            /* Color de fondo general */
+            --background-primary-color: #181C25;
+            /* Pico: Slate: pico-color-slate-900 */
+            --background-secondary-color: #2A3140;
+            /* Pico: Slate: pico-color-slate-800 */
+    
+            /* Fuentes */
+            --main-font: 'Roboto', sans-serif;
+            /* Fuente principal */
+            --heading-font: 'Montserrat', sans-serif;
+            /* Fuente para encabezados (opcional) */
+    
+            /* Colores de fuentes */
+            --font-primary-color: #C6C6C6;
+            /* Pico: Grey: pico-color-grey-200 */
+        }
+    /* Estilos generales del body para aplicar el fondo y la fuente principal */
+    body {
+        font-family: var(--main-font);
+        background-color: var(--background-primary-color);
+        color: var(--font-primary-color);
+        /* Color de texto general */
+        line-height: 1.6;
+        /* Interlineado base */
+    }
+
+    /* Estilos para encabezados (h1, h2, etc.) usando la fuente de encabezado */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--heading-font);
+        color: var(--primary-color);
+        /* Ejemplo de usar el color primario en encabezados */
+    }
+    /* PatientsView.vue */
+    .el-table--striped .el-table__body tr.el-table__row--striped td {
+        background-color: var(--background-primary-color) !important;
+        /* Cambia este color al que desees */
+    }
+}
