@@ -1,48 +1,41 @@
 <template>
   <footer class="app-footer">
-    <div class="copyright">
-      &copy; {{ currentYear }} Viento Sur. Todos los derechos reservados.
-    </div>
-    <div class="links">
-      <a href="/privacy">Política de Privacidad</a> |
-      <a href="/terms">Términos de Uso</a>
-    </div>
+    <small>&copy; {{ currentYear }} Viento Sur. Todos los derechos reservados.</small>
   </footer>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-
-const currentYear = ref(new Date().getFullYear());
+<script lang="ts" setup>
+const currentYear = new Date().getFullYear()
 </script>
 
 <style scoped>
 .app-footer {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  padding: 1rem 20px;
-  background-color: var(--background-secondary-color); /* Un fondo claro para el footer */
-  border-top: 1px solid var(--background-primary-color);
-  font-size: 0.8rem;
-  color: #6c757d;
+  padding: 1rem 2rem;
+  background-color: var(--pico-secondary-background);
+  /* Fondo coherente con Pico */
+  border-top: 1px solid var(--pico-border-color);
+  font-size: 0.875rem;
+  color: var(--pico-muted-color);
+  max-height: 70px;
 }
 
-.copyright {
-  text-align: left;
+.footer-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.links {
-  text-align: right;
-}
-
-.links a {
-  color: #6c757d;
+.footer-links a {
+  color: var(--pico-muted-color);
   text-decoration: none;
-  margin-left: 1rem;
 }
 
-.links a:hover {
+.footer-links a:hover {
   text-decoration: underline;
 }
 </style>

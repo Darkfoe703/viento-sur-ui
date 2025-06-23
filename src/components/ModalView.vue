@@ -18,7 +18,7 @@
             <footer>
                 <slot name="footer">
                     <form method="dialog">
-                        <button @click="closeModal">Cerrar</button>
+                        <button @click="closeModal" class="secondary button-form">SALIR</button>
                     </form>
                 </slot>
             </footer>
@@ -78,9 +78,7 @@ export default {
 </script>
 
 <style scoped>
-/*
-    Este bloque de estilos está vacío para que Pico.css aplique sus estilos por defecto.
-    Asegúrate de que Pico.css esté correctamente enlazado en tu proyecto (ej. en public/index.html
-    o importado en main.js) para que los estilos se apliquen.
-  */
+.button-form {
+    width: 130px;
+}
 </style>

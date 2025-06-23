@@ -1,97 +1,139 @@
-<!-- TODO: Asegurarme que el sidebar se vea bien en dispositivos móviles
-y que el menú colapsado funcione correctamente. -->
 <template>
-  <el-menu
-    :default-active="activeIndex"
-    class="el-menu-vertical-demo"
-    @open="handleOpen"
-    @close="handleClose"
-    :collapse="isCollapse"
-    :router="true"
-  >
-    <el-menu-item @click="toggleCollapse">
-      <el-icon @click="toggleCollapse"><Menu /></el-icon>
-      <span v-if="!isCollapse" @click="toggleCollapse">Viento Sur Dashboard</span>
-    </el-menu-item>
-    <el-menu-item index="/calendar">
-      <el-icon @click="toggleCollapse"><Calendar /></el-icon>
-      <span>Turnos</span>
-    </el-menu-item>
-    <el-menu-item index="/patients">
-      <el-icon @click="toggleCollapse"><User /></el-icon>
-      <span>Pacientes</span>
-    </el-menu-item>
-    <el-menu-item index="/schedules">
-      <el-icon @click="toggleCollapse"><Clock /></el-icon>
-      <span>Horarios</span>
-    </el-menu-item>
-  </el-menu>
+  <aside class="sidebar" :class="{ collapsed: isCollapsed }">
+    <div class="sidebar-header">
+      <button class="toggle-btn" @click="$emit('toggle-sidebar')"
+        :aria-label="isCollapsed ? 'Expandir menú' : 'Contraer menú'">
+        <Menu class="nav-icon"/>
+      </button>
+      <h2 v-show="!isCollapsed" class="sidebar-title">Dashboard</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul>
+        <li v-for="item in menuItems" :key="item.key">
+          <a href="#" class="nav-item" :class="{ active: activeMenu === item.key }"
+            @click.prevent="$emit('set-active-menu', item.key)">
+            <component :is="item.icon" class="nav-icon" :size="24" />
+            <span v-show="!isCollapsed" class="nav-text">{{ item.label }}</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { Menu, Calendar, User, Clock } from '@element-plus/icons-vue';
-import { useRoute } from 'vue-router';
+<script lang="ts" setup>
+import { Menu, Home, CalendarDays, Users, Clock } from 'lucide-vue-next'
 
-const route = useRoute();
-const isCollapse = ref(false);
-const activeIndex = ref(route.path);
+defineProps({
+  isCollapsed: Boolean,
+  activeMenu: String
+})
 
-const toggleCollapse = () => {
-  isCollapse.value = !isCollapse.value;
-};
+defineEmits(['toggle-sidebar', 'set-active-menu'])
 
-const handleOpen = (key, keyPath) => {
-  console.log(key, keyPath);
-};
-
-const handleClose = (key, keyPath) => {
-  console.log(key, keyPath);
-};
+const menuItems = [
+  { key: 'inicio', label: 'Inicio', icon: Home },
+  { key: 'turnos', label: 'Turnos', icon: CalendarDays },
+  { key: 'pacientes', label: 'Pacientes', icon: Users },
+  { key: 'horarios', label: 'Horarios', icon: Clock }
+]
 </script>
 
 <style scoped>
-.el-menu {
+.sidebar {
+  width: 280px;
+  background-color: var(--pico-card-background-color);
+  border-right: 1px solid var(--pico-border-color);
+  transition: width 0.3s ease;
+  position: fixed;
+  height: 100vh;
+  z-index: 1000;
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar-header {
+  padding: .5rem;
+  border-bottom: 1px solid var(--pico-border-color);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.toggle-btn {
+  background: none;
   border: none;
-}
-.el-menu-vertical-demo:not(.el-menu--collapse) {
-  width: auto; /* Ancho del menú desplegado */
-  min-height: 400px;
-  background-color: var(--background-secondary-color);
-}
-
-.el-menu--collapse {
-  width: 60px; /* Ancho del menú colapsado */
-  background-color: var(--background-secondary-color);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: var(--pico-border-radius);
+  color: var(--pico-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.el-menu-item [class*="el-icon"] {
-  margin-right: 0 !important; /* Evita el margen del icono cuando el menú está colapsado */
-  color: var(--font-primary-color);
+.toggle-btn:hover {
+  background-color: var(--pico-secondary-background);
 }
 
-.el-menu-item:hover{
-  background-color: var(--background-primary-color);
-}
-.el-menu-item span {
-  font-size: 1.2em;
-  padding-left: 1em;
-  color: var(--font-primary-color);
-  /* Oculta el texto cuando el menú está colapsado */
-  overflow: hidden;
+.sidebar-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
   white-space: nowrap;
-  width: 0;
-  transition: width 0.3s ease-in-out;
 }
 
-.el-menu--collapse .el-menu-item span {
-  width: 0 !important;
+.sidebar-nav {
+  padding: 1rem 0;
 }
 
-.el-menu:not(.el-menu--collapse) .el-menu-item span {
-  width: auto;
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
-.el-menu-item.is-active {
-	color: var(--accent-color);
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem .5rem;
+  color: var(--pico-color);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin: 0 0.1rem;
+  border-radius: var(--pico-border-radius);
+  
+}
+
+.nav-item:hover {
+  background-color: var(--pico-secondary-background);
+  color: var(--pico-primary);
+}
+
+.nav-item.active {
+  background-color: var(--pico-primary);
+  color: var(--pico-primary-inverse);
+}
+
+.nav-icon {
+  flex-shrink: 0;
+}
+
+.nav-text {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
 }
 </style>
