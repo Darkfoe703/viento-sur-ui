@@ -16,7 +16,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="horario in horarios" :key="horario.id">
+                    <tr v-for="horario in horarios.results" :key="horario.id">
                         <td>{{ horario.dia }}</td>
                         <td>{{ horario.hora }}</td>
                         <td>
@@ -38,6 +38,8 @@
                 </tbody>
             </table>
         </div>
+        <PaginationBar :previous="horarios.previous" :next="horarios.next" :current-page="currentPage"
+            :total-pages="totalPages" @go-previous="goToPrevious" @go-next="goToNext" @go-to-page="goToPage" />
     </article>
     <ModalView :is-visible="mostrarModal" @close="mostrarModal = false">
         <template #header>
@@ -93,38 +95,85 @@
             </form>
         </template>
     </ModalView>
+    <!--
+    TODO: mensaje de exito y de error
+    TODO: validación de horarios
+    TODO: validación de horarios superpuestos
+    TODO: edición de horarios 
+    -->
 </template>
 
 <script lang="ts" setup>
 import ModalView from '@/components/ModalView.vue'
+import PaginationBar from '@/components/PaginationBar.vue'
 import { ref, onMounted } from 'vue'
 import { SquarePen, Trash2 } from 'lucide-vue-next'
-import { getSchedules, createSchedule } from '@/services/schedulesService'
+import { getSchedules, createSchedule, updateSchedule, deleteSchedule } from '@/services/schedulesService'
 
 const mostrarModal = ref(false)
-const horarios = ref([])
-
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-
-function transformarHorario(data: any) {
-    return data.map((item: any) => ({
-        id: item.id,
-        dia: diasSemana[item.day_of_week] ?? 'Desconocido',
-        hora: `${item.start_time.slice(0, 5)} - ${item.end_time.slice(0, 5)}`,
-        disponible: item.is_available
-    }))
-}
-onMounted(async () => {
-    try {
-        const datos = await getSchedules()
-        horarios.value = transformarHorario(datos)
-    } catch (error) {
-        console.error('Error al obtener los horarios:', error)
-    }
+const horarios = ref({
+    count: 0,
+    next: null,
+    previous: null,
+    results: []
 })
+const modoEdicion = ref(false)
+const horarioEditandoId = ref<number | null>(null)
+const currentPage = ref(1)
+const totalPages = ref(1)
+
+onMounted(cargarHorarios)
+
+function transformarRespuesta(data: any) {
+    totalPages.value = Math.ceil(data.count / 5); // Suponemos 10 por página
+    return {
+        count: data.count,
+        next: data.next,
+        previous: data.previous,
+        results: data.results.map((item: any) => ({
+            id: item.id,
+            dia: diasSemana[item.day_of_week] ?? 'Desconocido',
+            hora: `${item.start_time.slice(0, 5)} - ${item.end_time.slice(0, 5)}`,
+            disponible: item.is_available,
+            permanente: item.is_reserved
+        }))
+    }
+}
+
+async function cargarHorarios(url?: string) {
+    try {
+        const datos = await getSchedules(url);
+        horarios.value = transformarRespuesta(datos);
+    } catch (error) {
+        console.error('Error al obtener los horarios:', error);
+    }
+}
+
+function goToNext() {
+    if (horarios.value.next) {
+        currentPage.value++;
+        cargarHorarios(horarios.value.next);
+    }
+}
+
+function goToPrevious() {
+    if (horarios.value.previous) {
+        currentPage.value--;
+        cargarHorarios(horarios.value.previous);
+    }
+}
+
+function goToPage(page: number) {
+    currentPage.value = page;
+    const url = `schedules/?page=${page}`;
+    cargarHorarios(url);
+}
+
+
 
 const nuevoHorario = ref({
-    day_of_week: '',
+    day_of_week: null,
     start_time: '',
     end_time: '',
     is_available: true,
@@ -133,59 +182,71 @@ const nuevoHorario = ref({
 
 const guardarHorario = async () => {
     const payload = {
-        day_of_week: nuevoHorario.value.day_of_week,
+        day_of_week: parseInt(nuevoHorario.value.day_of_week),
         start_time: nuevoHorario.value.start_time + ':00Z',
         end_time: nuevoHorario.value.end_time + ':00Z',
         is_available: nuevoHorario.value.is_available,
         is_reserved: nuevoHorario.value.is_reserved
     }
-    try {
-        const nuevoHorario = await createSchedule(payload);
-        console.log("Horario creado:", nuevoHorario);
-        mostrarModal.value = false;
-        // Podés actualizar la lista local de horarios o volver a hacer fetch
-    } catch (error) {
-        console.error("Error al crear horario:", error);
-    }
 
+    try {
+        if (modoEdicion.value && horarioEditandoId.value !== null) {
+            await updateSchedule(horarioEditandoId.value, payload)
+            console.log("Horario actualizado")
+        } else {
+            await createSchedule(payload)
+            console.log("Horario creado")
+        }
+
+        mostrarModal.value = false
+        modoEdicion.value = false
+        horarioEditandoId.value = null
+
+        const datos = await getSchedules()
+        horarios.value = transformarRespuesta(datos)
+    } catch (error) {
+        console.error("Error al guardar horario:", error)
+    }
 }
 
 const editarHorario = (id: number) => {
-    console.log('Editar horario:', id)
+    const horario = horarios.value.results.find(h => h.id === id)
+    if (!horario) return
+
+    modoEdicion.value = true
+    horarioEditandoId.value = id
+
+    // Convertir formato para campos del formulario
+    const horaInicio = horario.hora.split(' - ')[0]
+    const horaFin = horario.hora.split(' - ')[1]
+    const dayIndex = diasSemana.indexOf(horario.dia)
+
+    nuevoHorario.value = {
+        day_of_week: dayIndex.toString(),
+        start_time: horaInicio,
+        end_time: horaFin,
+        is_available: horario.disponible,
+        is_reserved: horario.permanente
+    }
+
+    mostrarModal.value = true
 }
 
-const eliminarHorario = (id: number) => {
-    console.log('Eliminar horario:', id)
+const eliminarHorario = async (id: number) => {
+    const confirmar = confirm("¿Estás seguro de que querés eliminar este horario?");
+    if (!confirmar) return;
+
+    try {
+        await deleteSchedule(id);
+        horarios.value.results = horarios.value.results.filter(h => h.id !== id);
+        console.log('Horario eliminado:', id);
+    } catch (error: any) {
+        console.error('Error al eliminar horario:', error);
+        alert(error?.response?.data?.detail || "Ocurrió un error al eliminar el horario.");
+    }
 }
-// import ModalView from '@/components/ModalView.vue'
-// import { ref } from 'vue'
-// import { SquarePen, Trash2 } from 'lucide-vue-next'
-
-// const mostrarModal = ref(false)
-
-// // Datos de ejemplo para horarios
-// const horarios = ref([
-//     { id: 1, dia: 'Martes', hora: '14:00', disponible: false },
-//     { id: 2, dia: 'Martes', hora: '14:40', disponible: false },
-//     { id: 3, dia: 'Martes', hora: '15:20', disponible: false },
-//     { id: 4, dia: 'Martes', hora: '16:00', disponible: true },
-//     { id: 5, dia: 'Miércoles', hora: '08:30', disponible: false },
-//     { id: 6, dia: 'Miércoles', hora: '09:10', disponible: true },
-//     { id: 7, dia: 'Miércoles', hora: '11:00', disponible: false },
-//     { id: 8, dia: 'Jueves', hora: '16:00', disponible: false },
-//     { id: 9, dia: 'Jueves', hora: '16:40', disponible: false },
-//     { id: 10, dia: 'Jueves', hora: '17:20', disponible: false }
-// ])
-// const editarHorario = (id: number) => {
-//     console.log('Editar horario:', id)
-//     // Aquí implementarías la lógica de edición
-// }
-
-// const eliminarHorario = (id: number) => {
-//     console.log('Eliminar horario:', id)
-//     // Aquí implementarías la lógica de eliminación
-// }
 </script>
+
 
 <style scoped>
 /* Badges */
